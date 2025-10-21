@@ -1,0 +1,450 @@
+/* Gorgeous Call Assistance Page CSS */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-blue: #4cafef;
+  --light-blue: #8edbf9;
+  --aqua: #64e3e3;
+  --deep-blue: #1e3c72;
+  --glass-bg: rgba(255, 255, 255, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: rgba(31, 38, 135, 0.15);
+  --success: #4caf50;
+  --danger: #f44336;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+.call-page {
+  min-height: 100vh;
+  min-width: 100vw;
+  padding: 30px;
+  background: url("/login-bg.jpg") no-repeat center center/cover fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background elements */
+.call-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(100, 227, 227, 0.1) 0%, transparent 50%);
+  animation: pulse 15s infinite alternate;
+  z-index: 0;
+}
+
+.call-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%2364e3e3' fill-opacity='0.1' d='M0,128L48,117.3C96,107,192,85,288,112C384,139,480,213,576,218.7C672,224,768,160,864,138.7C960,117,1056,139,1152,149.3C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%234cafef' fill-opacity='0.1' d='M0,224L48,213.3C96,203,192,181,288,160C384,139,480,117,576,133.3C672,149,768,203,864,208C960,213,1056,171,1152,149.3C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
+  background-size: 100%;
+  opacity: 0.5;
+  z-index: -1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotate(360deg) scale(1.2);
+    opacity: 0.3;
+  }
+}
+
+.call-page h2 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--deep-blue) 0%, var(--primary-blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin: 30px 0;
+  position: relative;
+  padding-bottom: 15px;
+  animation: slideInDown 0.7s ease-out;
+  z-index: 2;
+}
+
+.call-page h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--aqua), transparent);
+  border-radius: 2px;
+  animation: expandLine 1s ease-out 0.5s both;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expandLine {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100px;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 40px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 10px;
+  border-radius: 50px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 5px 15px var(--glass-shadow);
+  animation: fadeIn 0.8s ease-out 0.3s both;
+  z-index: 2;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tabs button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 50px;
+  background: transparent;
+  color: var(--deep-blue);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabs button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tabs button.active {
+  background: linear-gradient(135deg, var(--aqua) 0%, var(--primary-blue) 100%);
+  color: white;
+  box-shadow: 0 5px 15px rgba(76, 175, 239, 0.4);
+}
+
+.add-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
+  /* background: var(--glass-bg); */
+  
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 30px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 24px var(--glass-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.8s ease-out 0.5s both;
+  z-index: 2;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.add-contact-form input {
+  padding: 15px 20px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  font-family: "Poppins", sans-serif;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  color: var(--deep-blue);
+  font-weight: 500;
+}
+
+.add-contact-form input:focus {
+  border-color: var(--aqua);
+  box-shadow: 0 0 0 3px rgba(100, 227, 227, 0.2);
+  outline: none;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.add-contact-form input::placeholder {
+  color: rgba(30, 60, 114, 0.6);
+}
+
+.add-contact-form button {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, var(--aqua) 0%, var(--primary-blue) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 5px 15px rgba(76, 175, 239, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.add-contact-form button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: all 0.6s ease;
+}
+
+.add-contact-form button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(76, 175, 239, 0.6);
+}
+
+.add-contact-form button:hover::before {
+  left: 100%;
+}
+
+.contact-list {
+  width: 100%;
+  max-width: 700px;
+  list-style: none;
+  animation: fadeIn 0.8s ease-out 0.7s both;
+  z-index: 2;
+}
+
+.contact-list > p {
+  text-align: center;
+  color: var(--deep-blue);
+  font-style: italic;
+  opacity: 0.7;
+  padding: 40px 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+}
+
+.contact-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 15px;
+  border: 1px solid var(--glass-border);
+  margin-bottom: 15px;
+  box-shadow: 0 5px 15px var(--glass-shadow);
+  transition: all 0.3s ease;
+  animation: slideInRight 0.5s ease-out both;
+}
+
+.contact-item:nth-child(1) { animation-delay: 0.5s; }
+.contact-item:nth-child(2) { animation-delay: 0.6s; }
+.contact-item:nth-child(3) { animation-delay: 0.7s; }
+.contact-item:nth-child(4) { animation-delay: 0.8s; }
+.contact-item:nth-child(5) { animation-delay: 0.9s; }
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.contact-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(76, 175, 239, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.contact-item strong {
+  color: var(--deep-blue);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.contact-item > div {
+  display: flex;
+  gap: 10px;
+}
+
+.call-btn {
+  padding: 8px 15px;
+  background: linear-gradient(135deg, var(--success) 0%, #66bb6a 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.call-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(76, 175, 139, 0.4);
+}
+
+.contact-item button {
+  padding: 8px 15px;
+  background: linear-gradient(135deg, var(--danger) 0%, #ff8a8a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.contact-item button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+}
+
+.back-btn {
+  margin-top: 30px;
+  padding: 12px 25px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 50px;
+  color: var(--deep-blue);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 5px 15px var(--glass-shadow);
+  animation: fadeIn 1s ease-out 1s both;
+  z-index: 2;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(76, 175, 239, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .call-page {
+    padding: 20px;
+  }
+  
+  .call-page h2 {
+    font-size: 2rem;
+  }
+  
+  .tabs {
+    flex-direction: column;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .contact-item {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .contact-item > div {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .call-page {
+    padding: 15px;
+  }
+  
+  .call-page h2 {
+    font-size: 1.8rem;
+  }
+  
+  .add-contact-form {
+    padding: 20px;
+  }
+  
+  .contact-item {
+    padding: 15px;
+  }
+  
+  .call-btn, .contact-item button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .back-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
