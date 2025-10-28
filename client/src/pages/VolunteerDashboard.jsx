@@ -60,7 +60,7 @@ const [caseNote, setCaseNote] = useState("");
     const fetchVolunteer = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5600/api/volunteer/me", {
+        const res = await axios.get("https://mental-health-software.onrender.com/api/volunteer/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setVolunteer(res.data);
@@ -86,7 +86,7 @@ const [caseNote, setCaseNote] = useState("");
     if (!volunteer?.email) return;
     try {
       const res = await axios.get(
-        `http://localhost:5600/api/chat/volunteer/${encodeURIComponent(volunteer.email)}`
+        `https://mental-health-software.onrender.com/api/chat/volunteer/${encodeURIComponent(volunteer.email)}`
       );
 
       const formatted = res.data.map((c) => ({
@@ -277,7 +277,7 @@ const handleSendMessage = async () => {
   const msg = newMessage.trim();
 
   try {
-    await axios.post("http://localhost:5600/api/chat/send", {
+    await axios.post("https://mental-health-software.onrender.com/api/chat/send", {
       userEmail: selectedChat.userEmail,
       volunteerEmail: volunteer.email,
       senderEmail: volunteer.email,
@@ -427,7 +427,7 @@ const handleInputChange = (e) => {
 const handleSaveProfile = async () => {
   try {
     const res = await axios.put(
-      `http://localhost:5600/api/volunteer/${volunteer._id}`,
+      `https://mental-health-software.onrender.com/api/volunteer/${volunteer._id}`,
       volunteer
     );
     setVolunteer(res.data);     // update state with saved values
@@ -1864,7 +1864,7 @@ const handleSaveProfile = async () => {
 
           try {
             const { data } = await axios.post(
-              "http://localhost:5600/api/resources/upload",
+              "https://mental-health-software.onrender.com/api/resources/upload",
               formData
             );
             setResources((prev) => [data, ...prev]);
