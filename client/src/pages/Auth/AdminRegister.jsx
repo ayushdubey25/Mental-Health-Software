@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../Styling/AdminRegister.css";
 
-const API_URL = "http://localhost:5600/api";
+const API_URL = "https://mental-health-software.onrender.com/api";
 
 const AdminRegister = () => {
   const navigate = useNavigate();
