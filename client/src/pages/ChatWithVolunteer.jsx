@@ -35,7 +35,7 @@ export default function ChatWithVolunteer() {
 
   useEffect(() => {
     if (!userEmail || !volunteerEmail) return;
-    axios.get(`http://localhost:5600/api/chat/${userEmail}/${volunteerEmail}`)
+    axios.get(`https://mental-health-software.onrender.com/api/chat/${userEmail}/${volunteerEmail}`)
       .then((res) => setMessages(res.data))
       .catch(console.error);
   }, [userEmail, volunteerEmail]);
@@ -51,7 +51,7 @@ export default function ChatWithVolunteer() {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:5600/api/chat/send", {
+      const res = await axios.post("https://mental-health-software.onrender.com/api/chat/send", {
         userEmail,
         volunteerEmail,
         senderEmail: currentUserEmail,
@@ -82,7 +82,7 @@ export default function ChatWithVolunteer() {
   formData.append("senderEmail", currentUserEmail);
 
   try {
-    const res = await axios.post("http://localhost:5600/api/chat/send-file", formData, {
+    const res = await axios.post("https://mental-health-software.onrender.com/api/chat/send-file", formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
     setMessages(res.data.messages);
