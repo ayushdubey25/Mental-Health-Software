@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../Styling/Users.css';
 
-const API_URL = "http://localhost:5600/api";
+const API_URL = "https://mental-health-software.onrender.com/api";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
