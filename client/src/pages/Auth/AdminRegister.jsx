@@ -1,17 +1,19 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../../Styling/AdminRegister.css";
 
+const API_URL = "http://localhost:5600/api";
+
 const AdminRegister = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: "",
     email: "",
     password: "",
-    confirmPassword: "",
-    role: "",
-    mobile: "",
     remember: false,
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -21,18 +23,28 @@ const AdminRegister = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLogin) {
-      console.log("Admin Login:", formData.email, formData.password);
-      alert("Admin logged in successfully! ✅");
-    } else {
-      if (formData.password !== formData.confirmPassword) {
-        alert("Passwords do not match ❌");
-        return;
-      }
-      console.log("Admin Registered:", formData);
-      alert("Admin registered successfully! ✅");
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await axios.post(`${API_URL}/admin/login`, {
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Store token
+      localStorage.setItem("adminToken", res.data.token);
+      localStorage.setItem("adminData", JSON.stringify(res.data.admin));
+
+      alert(`Welcome ${res.data.admin.name}! ✅`);
+      navigate("/admin/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.error || "Login failed");
+      alert("Invalid admin credentials ❌");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,52 +52,34 @@ const AdminRegister = () => {
     <div className="admin-register-container">
       <div className="admin-register-card">
         <div className="register-header">
-          <h1>{isLogin ? "Admin Login" : "Admin Registration"}</h1>
+          <h1>Admin Login</h1>
+          <p style={{ color: "#666", fontSize: "14px" }}>
+            Only authorized admins can access this portal
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="register-form">
-          {!isLogin && (
-            <>
-              <div className="input-group">
-                <input
-                  type="text"
-                  name="fullName"
-                  placeholder="Full Name"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="input-group">
-                <input
-                  type="text"
-                  name="role"
-                  placeholder="Role / Organization"
-                  value={formData.role}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="input-group">
-                <input
-                  type="text"
-                  name="mobile"
-                  placeholder="Mobile Number (optional)"
-                  value={formData.mobile}
-                  onChange={handleChange}
-                />
-              </div>
-            </>
+          {error && (
+            <div style={{
+              padding: "10px",
+              background: "#fee",
+              color: "#c00",
+              borderRadius: "8px",
+              marginBottom: "15px"
+            }}>
+              {error}
+            </div>
           )}
 
           <div className="input-group">
             <input
               type="email"
               name="email"
-              placeholder="Email"
+              placeholder="Admin Email"
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
 
@@ -97,21 +91,9 @@ const AdminRegister = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
-
-          {!isLogin && (
-            <div className="input-group">
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          )}
 
           <div className="remember-forgot">
             <label className="remember-me">
@@ -125,26 +107,13 @@ const AdminRegister = () => {
             </label>
           </div>
 
-          <button type="submit" className="register-btn">
-            {isLogin ? "Login" : "Register"}
+          <button type="submit" className="register-btn" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <div className="register-footer">
-          {isLogin ? (
-            <>
-              <p className="toggle-link" onClick={() => setIsLogin(false)}>
-                New Admin? Register here
-              </p>
-              <a href="#" className="forgot-link">
-                Forgot Password?
-              </a>
-            </>
-          ) : (
-            <p className="toggle-link" onClick={() => setIsLogin(true)}>
-              Already registered? Login
-            </p>
-          )}
+        <div className="register-footer" style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
+          <p>Contact system administrator for access</p>
         </div>
       </div>
     </div>

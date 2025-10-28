@@ -228,7 +228,7 @@ textarea {
   /* background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85)); */
   border: none;
   border-radius: 14px;
-  /* color: #4facfe; */
+  color: #4facfe; 
   font-weight: 600;
   font-size: 1.1rem;
   cursor: pointer;

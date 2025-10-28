@@ -1,0 +1,125 @@
+.dashboard-container {
+  padding: 30px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+  font-size: 32px;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.dashboard-header p {
+  color: #64748b;
+  margin: 0;
+  font-size: 16px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.stat-icon.users { background: #dbeafe; }
+.stat-icon.volunteers { background: #ddd6fe; }
+.stat-icon.cases { background: #fef3c7; }
+.stat-icon.completed { background: #d1fae5; }
+
+.stat-content h3 {
+  margin: 0 0 8px 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.stat-change {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stat-change.positive { color: #10b981; }
+.stat-change.neutral { color: #64748b; }
+
+.quick-actions {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.quick-actions h2 {
+  margin: 0 0 24px 0;
+  color: #1e293b;
+  font-size: 20px;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.action-icon {
+  font-size: 32px;
+}

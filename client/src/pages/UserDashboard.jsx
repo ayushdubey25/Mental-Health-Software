@@ -103,6 +103,24 @@ export default function UserDashboard() {
       }
     ]);
   };
+  function isVolunteerAvailableNow(vol) {
+  if (!vol.emergencyAvailability || !Array.isArray(vol.emergencyAvailability)) return false;
+  const now = new Date();
+  const currentDay = now.toLocaleString('en-US', { weekday: 'long' });
+  const minutesNow = now.getHours() * 60 + now.getMinutes();
+  return vol.emergencyAvailability.some(slot =>
+    slot.day === currentDay &&
+    slot.start &&
+    slot.end &&
+    convert(slot.start) <= minutesNow &&
+    convert(slot.end) > minutesNow
+  );
+  function convert(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h*60+(m||0);
+  }
+}
+
 
   const downloadReportPDF = () => {
     if (!aiReport) return;
@@ -221,6 +239,16 @@ export default function UserDashboard() {
       setReportLoading(false);
     }
   };
+
+ useEffect(() => {
+    axios.get("http://localhost:5600/api/volunteer")
+      .then(res => setVolunteers(res.data))
+      .catch(err => {
+        console.error("Unable to load volunteers:", err);
+        setVolunteers([]);
+      });
+  }, []);
+
 
   if (loading) return <p className="dashboard-container">Loading profile…</p>;
   if (!user) return <p className="dashboard-container">No user found.</p>;
@@ -392,24 +420,36 @@ export default function UserDashboard() {
 
             <p>💬 Chat with a Volunteer</p>
             <p>Select a volunteer to start chatting:</p>
-            <div className="volunteer-list">
-              {volunteers.map((v) => (
-                <button
-                  key={v.email}
-                  onClick={() => setSelectedVolunteer(v)}
-                  className="volunteer-btn"
-                >
-                  {v.fullName} ({v.language || "N/A"})
-                </button>
-              ))}
-            </div>
+         
+<div className="volunteer-list">
+  {volunteers.map((v) => (
+    <button
+      key={v.email}
+      // Navigate to chat-volunteer room, pass both emails!
+      onClick={() =>
+        navigate("/chat-volunteer", {
+          state: {
+            volunteerEmail: v.email,
+            userEmail: user.email
+          }
+        })
+      }
+      className="volunteer-btn"
+    >
+      {v.fullName} ({v.skills || "N/A"})
+    </button>
+  ))}
+</div>
 
-            {selectedVolunteer && (
-              <ChatWithVolunteer
-                userId={user._id}
-                volunteerEmail={selectedVolunteer.email}
-              />
-            )}
+
+
+           {selectedVolunteer && (
+  <ChatWithVolunteer
+    userEmail={user.email}
+    volunteerEmail={selectedVolunteer.email}
+  />
+)}
+
           </div>
         )}
       </div>

@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { API_URL } from "../utils/api";
+import { useNavigate } from "react-router-dom";
+
 // import { useNavigate, useLocation } from "react-router-dom";
 
 function VolunteerDashboard() {
@@ -12,7 +15,18 @@ const [file, setFile] = useState(null);
 const [title, setTitle] = useState("");
 const [description, setDescription] = useState("");
 const [resources, setResources] = useState([]);
+const [sessions, setSessions] = useState([]);
+const [showSessionModal, setShowSessionModal] = useState(false);
+const navigate = useNavigate();
+
+const [assignedCases, setAssignedCases] = useState([]);
+const [selectedCase, setSelectedCase] = useState(null);
+const [caseNote, setCaseNote] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [newSession, setNewSession] = useState({
+  client: "", date: "", time: "", mode: "Video", notes: ""
+});
 
   // Add animation state
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +64,7 @@ const [resources, setResources] = useState([]);
           headers: { Authorization: `Bearer ${token}` },
         });
         setVolunteer(res.data);
+        
       } catch (err) {
         console.error(err);
         alert("Failed to fetch volunteer data");
@@ -58,6 +73,10 @@ const [resources, setResources] = useState([]);
 
     fetchVolunteer();
   }, []);
+  useEffect(() => {
+  // fetch volunteer, then:
+  setSessions(volunteer.sessions || []);
+}, [volunteer]);
 
  
   
@@ -110,6 +129,15 @@ const [resources, setResources] = useState([]);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+function handleEditTime(day, field, value) {
+  setVolunteer(prev => ({
+    ...prev,
+    emergencyAvailability: prev.emergencyAvailability.map(
+      slot => slot.day === day ? { ...slot, [field]: value } : slot
+    )
+  }));
+}
+
 
   const updateCallStatus = (index, newStatus) => {
     setCalls((prev) =>
@@ -180,30 +208,55 @@ const [resources, setResources] = useState([]);
     alert("Resource uploaded successfully ✅");
   };
 
+//fetch cases
+// Fetch cases on mount
+useEffect(() => {
+  const fetchCases = async () => {
+    if (!volunteer._id) return;
+    try {
+      const res = await axios.get(`${API_URL}/cases/volunteer/${volunteer._id}`);
+      setAssignedCases(res.data);
+    } catch (err) {
+      console.error("Failed to fetch cases:", err);
+    }
+  };
+  fetchCases();
+}, [volunteer._id]);
+
+// Update case status
+const handleUpdateCaseStatus = async (caseId, newStatus) => {
+  try {
+    const res = await axios.put(`${API_URL}/cases/${caseId}`, {
+      status: newStatus
+    });
+    setAssignedCases(prev => prev.map(c => c._id === caseId ? res.data : c));
+    alert("Status updated!");
+  } catch (err) {
+    alert("Failed to update status");
+  }
+};
+
+// Add note to case
+const handleAddNote = async (caseId) => {
+  if (!caseNote.trim()) return;
+  try {
+    const res = await axios.put(`${API_URL}/cases/${caseId}`, {
+      newNote: caseNote,
+      author: volunteer.fullName
+    });
+    setAssignedCases(prev => prev.map(c => c._id === caseId ? res.data : c));
+    setCaseNote("");
+    alert("Note added!");
+  } catch (err) {
+    alert("Failed to add note");
+  }
+};
+
+
   // Message states
   const [messageTab, setMessageTab] = useState("clients");
  
 
-  // // Mock chat data
-  // const [clientChats, setClientChats] = useState([
-  //   {
-  //     id: 1,
-  //     name: "Rahul Sharma",
-  //     avatar: "RS",
-  //     messages: [
-  //       { sender: "client", text: "I've been feeling anxious lately.", time: "10:30 AM" },
-  //       { sender: "me", text: "I understand, let's work on calming exercises.", time: "10:35 AM" },
-  //     ],
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Ananya Mehta",
-  //     avatar: "AM",
-  //     messages: [
-  //       { sender: "client", text: "Can we reschedule our session?", time: "9:00 AM" },
-  //     ],
-  //   },
-  // ]);
 
   const [volunteerChats, setVolunteerChats] = useState([
     {
@@ -252,100 +305,116 @@ const handleSendMessage = async () => {
 
 
 
-  // Mock volunteer data
-  // const [volunteer, setVolunteer] = useState({
-  //   fullName: "Jane Doe",
-  //   age: 30,
-  //   gender: "Female",
-  //   email: "janedoe@example.com",
-  //   mobile: "9876543210",
-  //   location: "Mumbai",
-  //   availability: "10 hours/week",
-  //   skills: "Psychology, Counseling",
-  //   bio: "Passionate about mental health support",
-  //   experience: "5 years of counseling experience",
-  //   profileImage: "/default-avatar.png",
-  // });
+ 
+ 
 
-  // State for schedule
-  const [sessions, setSessions] = useState([
-    {
-      client: "Rahul Sharma",
-      date: "2025-09-20",
-      time: "5:00 PM",
-      mode: "Video",
-      notes: "Follow-up on stress management",
-    },
-    {
-      client: "Ananya Mehta",
-      date: "2025-09-22",
-      time: "3:30 PM",
-      mode: "Call",
-      notes: "Initial consultation",
-    },
-  ]);
-
-  const [showSessionModal, setShowSessionModal] = useState(false);
-  const [newSession, setNewSession] = useState({
-    client: "",
-    date: "",
-    time: "",
-    mode: "Video",
-    notes: "",
-  });
-  const [editingIndex, setEditingIndex] = useState(null);
-
-  // Save or update session
-  const handleSaveSession = () => {
+ const handleSaveSession = async () => {
+  try {
+    let updatedSessions = [...sessions];
     if (editingIndex !== null) {
-      const updated = [...sessions];
-      updated[editingIndex] = newSession;
-      setSessions(updated);
-      setEditingIndex(null);
+      updatedSessions[editingIndex] = { ...newSession };
     } else {
-      setSessions([...sessions, newSession]);
+      updatedSessions.push({ ...newSession });
     }
-    setNewSession({ client: "", date: "", time: "", mode: "Video", notes: "" });
+    setSessions(updatedSessions);
+
+    const payload = new FormData();
+    
+    // Only append KNOWN, SAFE fields
+    const fieldsToSend = [
+      'fullName', 'age', 'gender', 'language', 'email', 
+      'mobile', 'location', 'availability', 'bio', 'profileImage'
+    ];
+    
+    fieldsToSend.forEach(key => {
+      if (volunteer[key] !== undefined) {
+        payload.append(key, volunteer[key]);
+      }
+    });
+
+    // Arrays need JSON.stringify
+    payload.append("skills", JSON.stringify(volunteer.skills || []));
+    payload.append("emergencyAvailability", JSON.stringify(volunteer.emergencyAvailability || []));
+    payload.append("sessions", JSON.stringify(updatedSessions));
+
+    const res = await fetch(`${API_URL}/volunteer/${volunteer._id}`, {
+      method: "PUT",
+      body: payload
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to save session");
+
+    setSessions(data.sessions || []);
+    setVolunteer(data);
     setShowSessionModal(false);
-  };
+    setEditingIndex(null);
+    setNewSession({
+      client: "",
+      date: "",
+      time: "",
+      mode: "Video",
+      notes: ""
+    });
+    alert(editingIndex !== null ? "Session updated successfully!" : "Session added successfully!");
+  } catch (error) {
+    alert("Error saving session: " + error.message);
+    console.error(error);
+  }
+};
+
+
 
   // Edit session
-  const handleEditSession = (index) => {
-    setEditingIndex(index);
-    setNewSession(sessions[index]);
-    setShowSessionModal(true);
-  };
+ const handleEditSession = (index) => {
+  setEditingIndex(index);
+  setNewSession(sessions[index]);
+  setShowSessionModal(true);
+};
+
 
   // Delete session
-  const handleDeleteSession = (index) => {
-    setSessions(sessions.filter((_, i) => i !== index));
-  };
+ const handleDeleteSession = async (index) => {
+  try {
+    const updatedSessions = sessions.filter((_, i) => i !== index);
+    setSessions(updatedSessions);
 
-  // Mock assigned cases
-  const [assignedCases, setAssignedCases] = useState([
-    {
-      id: 1,
-      patientName: "John Smith",
-      age: 28,
-      gender: "Male",
-      contact: "9876543210",
-      status: "Active",
-      reports: ["report1.pdf", "report2.pdf"],
-      progress: "Initial counseling done",
-    },
-    {
-      id: 2,
-      patientName: "Anita Kapoor",
-      age: 35,
-      gender: "Female",
-      contact: "9123456780",
-      status: "Pending",
-      reports: [],
-      progress: "Waiting for initial session",
-    },
-  ]);
+    const payload = new FormData();
+    
+    // Only append KNOWN, SAFE fields
+    const fieldsToSend = [
+      'fullName', 'age', 'gender', 'language', 'email', 
+      'mobile', 'location', 'availability', 'bio', 'profileImage'
+    ];
+    
+    fieldsToSend.forEach(key => {
+      if (volunteer[key] !== undefined) {
+        payload.append(key, volunteer[key]);
+      }
+    });
 
-  const [selectedCase, setSelectedCase] = useState(null);
+    payload.append("skills", JSON.stringify(volunteer.skills || []));
+    payload.append("emergencyAvailability", JSON.stringify(volunteer.emergencyAvailability || []));
+    payload.append("sessions", JSON.stringify(updatedSessions));
+
+    const res = await fetch(`${API_URL}/volunteer/${volunteer._id}`, {
+      method: "PUT",
+      body: payload
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to delete session");
+
+    setSessions(data.sessions || []);
+    setVolunteer(data);
+    alert("Session deleted successfully!");
+  } catch (error) {
+    alert("Error deleting session: " + error.message);
+    console.error(error);
+  }
+};
+
+
 
   
 // track input changes
@@ -1143,6 +1212,42 @@ const handleSaveProfile = async () => {
                         onBlur={(e) => Object.assign(e.target.style, {borderColor: '#cbd5e1', boxShadow: 'none', background: 'rgba(255, 255, 255, 0.7)'})}
                       />
                     </div>
+                    <div>
+    <h3 style={{marginBottom: "1em"}}>Emergency On-Call Schedule</h3>
+    {volunteer.emergencyAvailability?.map((slot, idx) => (
+      <div key={slot.day} style={{marginBottom: 5, display: "flex", alignItems: "center"}}>
+        <strong style={{ width: 90 , color:"black"}}>{slot.day}:</strong>
+        <input
+          type="time"
+          value={slot.start || ""}
+          onChange={e => handleEditTime(slot.day, "start", e.target.value)}
+          style={{marginLeft: 8}}
+        />
+        <span style={{margin: "0 6px", color:"black"}}>to</span>
+        <input
+          type="time"
+          value={slot.end || ""}
+          onChange={e => handleEditTime(slot.day, "end", e.target.value)}
+        />
+        <span style={{marginLeft: 12, color: "#bbb"}}>
+          {(slot.start && slot.end) ? `(${slot.start} - ${slot.end})` : "Not available"}
+        </span>
+      </div>
+    ))}
+  </div>
+) : (
+  <div>
+    <h3 style={{marginBottom: "1em"}}>Emergency On-Call Schedule</h3>
+    {volunteer.emergencyAvailability?.filter(slot => slot.start && slot.end).length === 0 ? (
+      <div style={{color: "#888"}}>No availability set.</div>
+    ) : (
+      <ul style={{paddingLeft: "18px"}}>
+        {volunteer.emergencyAvailability?.filter(slot => slot.start && slot.end).map(slot =>
+          <li key={slot.day}>{slot.day}: <b>{slot.start} – {slot.end}</b></li>
+        )}
+      </ul>
+    )}
+  </div>
                     <div style={styles.infoGroup}>
                       <span style={styles.infoLabel}>Gender</span>
                       <input 
@@ -1179,6 +1284,7 @@ const handleSaveProfile = async () => {
                         onBlur={(e) => Object.assign(e.target.style, {borderColor: '#cbd5e1', boxShadow: 'none', background: 'rgba(255, 255, 255, 0.7)'})}
                       />
                     </div>
+                    
                     <div style={styles.infoGroup}>
                       <span style={styles.infoLabel}>Location</span>
                       <input 
@@ -1276,6 +1382,47 @@ const handleSaveProfile = async () => {
                       <span style={styles.infoLabel}>Bio</span>
                       <p style={styles.infoText}>{volunteer.bio}</p>
                     </div>
+                     {/* ===== Emergency Availability (Schedule) ===== */}
+  <h3 style={{margin: "28px 0 12px 0", color:"black"}}>Emergency On-Call Schedule</h3>
+  {isEditing ? (
+    <div>
+      {volunteer.emergencyAvailability?.map((slot, idx) => (
+        <div key={slot.day} style={{marginBottom: 7, display: "flex", alignItems: "center",}}>
+          <strong style={{ width: 90, color:"#030303ff" }}>{slot.day}:</strong>
+          <input
+            type="time"
+            value={slot.start || ""}
+            onChange={e => handleEditTime(slot.day, "start", e.target.value)}
+            style={{marginLeft: 8}}
+          />
+          <span style={{margin: "0 5px", color:"#030303ff"}}>to</span>
+          <input
+            type="time"
+            value={slot.end || ""}
+            onChange={e => handleEditTime(slot.day, "end", e.target.value)}
+          />
+          <span style={{marginLeft: 8, color: "#030303ff"}}>
+            {(slot.start && slot.end) ? `(${slot.start} - ${slot.end})` : "Not available"}
+          </span>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div>
+      <ul style={{paddingLeft: "20px"}}>
+        {volunteer.emergencyAvailability?.map(slot =>
+          <li key={slot.day}>
+            <strong>{slot.day}:</strong> {(slot.start && slot.end) ? (
+              <span style={{color: "#2e7d32"}}>{slot.start} – {slot.end}</span>
+            ) : (
+              <span style={{color: "#999"}}>Not available</span>
+            )}
+          </li>
+        )}
+      </ul>
+    </div>
+  )}
+
                     <div style={{...styles.infoGroup, gridColumn: '1 / -1'}}>
                       <span style={styles.infoLabel}>Experience</span>
                       <p style={styles.infoText}>{volunteer.experience}</p>
@@ -1308,228 +1455,242 @@ const handleSaveProfile = async () => {
 
         {/* Assigned Cases Tab */}
         {activeTab === "tasks" && (
-          <div style={styles.card} onMouseOver={(e) => Object.assign(e.currentTarget.style, styles.cardHover)} onMouseOut={(e) => Object.assign(e.currentTarget.style, {transform: 'none', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'})}>
-            <div style={styles.cardHeader}>
-              <div style={styles.cardIcon}>🗂️</div>
-              <h2 style={styles.cardTitle}>Assigned Cases</h2>
-            </div>
-            <div style={styles.casesGrid}>
-              {assignedCases.map((c) => (
-                <div 
-                  key={c.id} 
-                  style={styles.caseCard}
-                  onMouseOver={(e) => Object.assign(e.currentTarget.style, styles.caseCardHover)}
-                  onMouseOut={(e) => Object.assign(e.currentTarget.style, {transform: 'none', boxShadow: '0 5px 15px rgba(0, 0, 0, 0.08)'})}
-                >
-                  <div style={{...styles.statusBadge, ...(c.status === 'Active' ? styles.statusActive : styles.statusPending)}}>
-                    {c.status}
-                  </div>
-                  <h3 style={{margin: '0 0 15px 0', color: '#2d3748'}}>{c.patientName}</h3>
-                  <div style={styles.caseDetails}>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Age</span>
-                      <span>{c.age}</span>
-                    </div>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Gender</span>
-                      <span>{c.gender}</span>
-                    </div>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Contact</span>
-                      <span>{c.contact}</span>
-                    </div>
-                  </div>
-                  <button 
-                    style={{...styles.button, padding: '10px 20px', width: '100%', marginTop: '15px'}}
-                    onClick={() => setSelectedCase(c)}
-                  >
-                    View Details
-                  </button>
-                </div>
-              ))}
-            </div>
+  <div style={styles.card}>
+    <div style={styles.cardHeader}>
+      <div style={styles.cardIcon}>📋</div>
+      <h2 style={styles.cardTitle}>Assigned Cases</h2>
+    </div>
 
-            {selectedCase && (
-              <div style={styles.modalOverlay} onClick={() => setSelectedCase(null)}>
-                <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-                  <h3 style={{margin: '0 0 20px 0', color: '#2d3748'}}>Patient Details</h3>
-                  <div style={styles.caseDetails}>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Name</span>
-                      <span>{selectedCase.patientName}</span>
-                    </div>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Age</span>
-                      <span>{selectedCase.age}</span>
-                    </div>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Gender</span>
-                      <span>{selectedCase.gender}</span>
-                    </div>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Contact</span>
-                      <span>{selectedCase.contact}</span>
-                    </div>
-                    <div style={styles.infoGroup}>
-                      <span style={styles.infoLabel}>Status</span>
-                      <span>{selectedCase.status}</span>
-                    </div>
+    {assignedCases.length === 0 ? (
+      <p style={{ color: "#718096", textAlign: "center", padding: "40px" }}>
+        No cases assigned yet.
+      </p>
+    ) : (
+      <div style={styles.casesGrid}>
+        {assignedCases.map(c => (
+          <div
+            key={c._id}
+            style={styles.caseCard}
+            onClick={() => setSelectedCase(c)}
+          >
+            <div style={{
+              ...styles.statusBadge,
+              ...(c.status === "Active" ? styles.statusActive : styles.statusPending)
+            }}>
+              {c.status}
+            </div>
+            <h3 style={{ margin: "0 0 15px 0", color: "#2d3748" }}>{c.userName}</h3>
+            <div style={styles.caseDetails}>
+              <div style={styles.infoGroup}>
+                <span style={styles.infoLabel}>Age</span>
+                <span>{c.userAge}</span>
+              </div>
+              <div style={styles.infoGroup}>
+                <span style={styles.infoLabel}>Gender</span>
+                <span>{c.userGender}</span>
+              </div>
+              <div style={styles.infoGroup}>
+                <span style={styles.infoLabel}>Contact</span>
+                <span>{c.userContact}</span>
+              </div>
+              <div style={styles.infoGroup}>
+                <span style={styles.infoLabel}>Severity</span>
+                <span style={{ 
+                  color: c.severity === "Critical" ? "#ef4444" : 
+                         c.severity === "High" ? "#f97316" : "#22c55e" 
+                }}>
+                  {c.severity}
+                </span>
+              </div>
+            </div>
+            <p style={{ margin: "10px 0", color: "#2d3748" }}>
+              <strong>Issue:</strong> {c.issue}
+            </p>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* Case Detail Modal */}
+    {selectedCase && (
+      <div style={styles.modalOverlay} onClick={() => setSelectedCase(null)}>
+        <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <h3 style={{ margin: "0 0 20px 0", color: "#2d3748" }}>Case Details</h3>
+          
+          <div style={styles.caseDetails}>
+            <div style={styles.infoGroup}>
+              <span style={styles.infoLabel}>Name</span>
+              <span>{selectedCase.userName}</span>
+            </div>
+            <div style={styles.infoGroup}>
+              <span style={styles.infoLabel}>Email</span>
+              <span>{selectedCase.userEmail}</span>
+            </div>
+            <div style={styles.infoGroup}>
+              <span style={styles.infoLabel}>Contact</span>
+              <span>{selectedCase.userContact}</span>
+            </div>
+            <div style={styles.infoGroup}>
+              <span style={styles.infoLabel}>Status</span>
+              <select
+                value={selectedCase.status}
+                onChange={(e) => handleUpdateCaseStatus(selectedCase._id, e.target.value)}
+                style={styles.input}
+              >
+                <option value="Pending">Pending</option>
+                <option value="Active">Active</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Completed">Completed</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={styles.infoGroup}>
+            <span style={styles.infoLabel}>Issue</span>
+            <p style={styles.infoText}>{selectedCase.issue}</p>
+          </div>
+
+          <div style={styles.infoGroup}>
+            <span style={styles.infoLabel}>Progress</span>
+            <p style={styles.infoText}>{selectedCase.progress}</p>
+          </div>
+
+          {/* Notes Section */}
+          <div style={styles.infoGroup}>
+            <span style={styles.infoLabel}>Notes</span>
+            {selectedCase.notes?.length > 0 ? (
+              <div style={{ maxHeight: "200px", overflowY: "auto", marginBottom: "15px" }}>
+                {selectedCase.notes.map((note, idx) => (
+                  <div key={idx} style={{
+                    padding: "10px",
+                    background: "rgba(0,0,0,0.05)",
+                    borderRadius: "8px",
+                    marginBottom: "8px"
+                  }}>
+                    <strong>{note.author}</strong>
+                    <p style={{ margin: "5px 0" }}>{note.content}</p>
+                    <small style={{ color: "#718096" }}>
+                      {new Date(note.timestamp).toLocaleString()}
+                    </small>
                   </div>
-                  <div style={styles.infoGroup}>
-                    <span style={styles.infoLabel}>Progress</span>
-                    <p style={styles.infoText}>{selectedCase.progress}</p>
-                  </div>
-                  <div style={styles.infoGroup}>
-                    <span style={styles.infoLabel}>Reports</span>
-                    <ul style={{paddingLeft: '20px', margin: '10px 0 0 0'}}>
-                      {selectedCase.reports.length > 0 ? (
-                        selectedCase.reports.map((r, index) => (
-                          <li key={index} style={{marginBottom: '8px'}}>
-                            <a href={`/${r}`} target="_blank" rel="noopener noreferrer" style={{color: '#68adfcff', textDecoration: 'none'}}>
-                              📄 {r}
-                            </a>
-                          </li>
-                        ))
-                      ) : (
-                        <li>No reports uploaded</li>
-                      )}
-                    </ul>
-                  </div>
-                  <div style={{display: 'flex', justifyContent: 'flex-end', marginTop: '25px'}}>
-                    <button 
-                      style={{...styles.button, backgroundColor: '#ef4444', padding: '10px 20px'}}
-                      onMouseOver={(e) => Object.assign(e.target.style, {backgroundColor: '#dc2626', transform: 'translateY(-2px)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'})}
-                      onMouseOut={(e) => Object.assign(e.target.style, {transform: 'none', boxShadow: 'none', backgroundColor: '#ef4444'})}
-                      onClick={() => setSelectedCase(null)}
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-                </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "#718096" }}>No notes yet.</p>
             )}
-          </div>
-        )}
 
-        {/* Messages Tab */}
+            <textarea
+              placeholder="Add a note..."
+              value={caseNote}
+              onChange={(e) => setCaseNote(e.target.value)}
+              style={{ ...styles.input, minHeight: "80px", marginBottom: "10px" }}
+            />
+            <button
+              style={styles.button}
+              onClick={() => handleAddNote(selectedCase._id)}
+            >
+              Add Note
+            </button>
+          </div>
+
+          <button
+            style={{ ...styles.button, backgroundColor: "#64748b", marginTop: "20px" }}
+            onClick={() => setSelectedCase(null)}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+
         {activeTab === "messages" && (
-          <div style={styles.card}>
-            <div style={styles.cardHeader}>
-              <div style={styles.cardIcon}>💬</div>
-              <h2 style={styles.cardTitle}>Messages</h2>
-            </div>
+  <div style={styles.card}>
+    <div style={styles.cardHeader}>
+      <div style={styles.cardIcon}>💬</div>
+      <h2 style={styles.cardTitle}>Messages</h2>
+    </div>
 
-            {/* Sub-Tabs */}
-            <div style={styles.messageTabs}>
-              <button
-                style={{
-                  ...styles.messageTabButton,
-                  ...(messageTab === "clients" ? styles.messageTabButtonActive : {})
-                }}
-                onClick={() => setMessageTab("clients")}
-              >
-                Clients
-              </button>
-              <button
-                style={{
-                  ...styles.messageTabButton,
-                  ...(messageTab === "volunteers" ? styles.messageTabButtonActive : {})
-                }}
-                onClick={() => setMessageTab("volunteers")}
-              >
-                Peer Volunteers
-              </button>
-            </div>
+    {/* Sub-Tabs */}
+    <div style={styles.messageTabs}>
+      <button
+        style={{
+          ...styles.messageTabButton,
+          ...(messageTab === "clients" ? styles.messageTabButtonActive : {})
+        }}
+        onClick={() => setMessageTab("clients")}
+      >
+        Clients
+      </button>
+      <button
+        style={{
+          ...styles.messageTabButton,
+          ...(messageTab === "volunteers" ? styles.messageTabButtonActive : {})
+        }}
+        onClick={() => setMessageTab("volunteers")}
+      >
+        Peer Volunteers
+      </button>
+    </div>
 
-            {/* Chat Layout */}
-            <div style={styles.chatContainer}>
-              {/* Sidebar */}
-              <div style={styles.chatSidebar}>
-                <div style={styles.chatSidebarHeader}>
-                  <h3 style={{margin: 0, fontSize: '18px'}}>
-                    {messageTab === "clients" ? "Clients" : "Volunteers"}
-                  </h3>
-                </div>
-                <div style={styles.chatList}>
-                  {(messageTab === "clients" ? clientChats : volunteerChats).map((chat) => (
-                    <div
-                      key={chat.id}
-                      style={{
-                        ...styles.chatListItem,
-                        ...(selectedChat?.id === chat.id ? styles.chatListItemSelected : {})
-                      }}
-                      onClick={() => setSelectedChat(chat)}
-                    >
-                      <div style={styles.avatar}>{chat.avatar}</div>
-                      <div style={styles.chatInfo}>
-                        <h4 style={styles.chatName}>{chat.name}</h4>
-                        <p style={styles.lastMsg}>
-  {chat.messages[chat.messages.length - 1]?.text}
-</p>
-
-                      </div>
-                    </div>
-                  ))}
-                </div>
+    {/* Chat Layout */}
+    <div style={styles.chatContainer}>
+      {/* Sidebar */}
+      <div style={styles.chatSidebar}>
+        <div style={styles.chatSidebarHeader}>
+          <h3 style={{ margin: 0, fontSize: '18px' }}>
+            {messageTab === "clients" ? "Clients" : "Volunteers"}
+          </h3>
+        </div>
+        <div style={styles.chatList}>
+          {(messageTab === "clients" ? clientChats : volunteerChats).map((chat) => (
+            <div
+              key={chat.id}
+              style={{
+                ...styles.chatListItem,
+                ...(selectedChat?.id === chat.id ? styles.chatListItemSelected : {})
+              }}
+              onClick={() => {
+                setSelectedChat(chat); // for highlight
+                // Open common chatbox route
+                navigate("/chat-volunteer", {
+                  state: {
+                    userEmail: messageTab === "clients" ? chat.userEmail : volunteer.email,
+                    volunteerEmail: messageTab === "clients" ? volunteer.email : chat.volunteerEmail,
+                  }
+                });
+              }}
+            >
+              <div style={styles.avatar}>{chat.avatar}</div>
+              <div style={styles.chatInfo}>
+                <h4 style={styles.chatName}>{chat.name}</h4>
+                <p style={styles.lastMsg}>
+                  {chat.messages?.[chat.messages.length - 1]?.text || "Start a conversation"}
+                </p>
               </div>
-
-              {/* Chat Window */}
-              <div style={styles.chatWindow}>
-                {selectedChat ? (
-                  <>
-                    <div style={styles.chatHeader}>
-                      <div style={styles.avatar}>{selectedChat.avatar}</div>
-                      <div>
-                        <h3 style={{margin: 0, fontSize: '18px'}}>{selectedChat.name}</h3>
-                        <p style={{margin: 0, fontSize: '14px', color: '#718096'}}>Online</p>
-                      </div>
-                    </div>
-                    <div style={styles.chatMessages}>
-                      {selectedChat.messages.map((msg, index) => (
-    <div
-      key={index}
-      style={{
-        ...styles.chatMessage,
-        ...(msg.senderEmail === volunteer.email
-          ? styles.chatMessageSent
-          : styles.chatMessageReceived),
-      }}>
-                          <p style={{margin: "0 0 5px 0"}}>{msg.text}</p>
-                          <span style={styles.messageTime}>{msg.time}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={styles.chatInput}>
-                      <input
-                        type="text"
-                        placeholder="Type a message..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        style={styles.chatInputField}
-                        onFocus={(e) => Object.assign(e.target.style, styles.chatInputFieldFocus)}
-                        onBlur={(e) => Object.assign(e.target.style, {borderColor: '#cbd5e1', boxShadow: 'none'})}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                      />
-                      <button 
-                        style={{...styles.button, padding: '10px 20px'}}
-                        onClick={handleSendMessage}
-                      >
-                        Send
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
-                    <p style={{textAlign: "center", color: "#718096", padding: "20px"}}>
-                      Select a conversation to start messaging
-                    </p>
-                  </div>
-                )}
-              </div>
+              {/* Add unread badge if you track unread */}
+              {chat.unreadCount > 0 && (
+                <span className="unread-dot">{chat.unreadCount > 9 ? "9+" : chat.unreadCount}</span>
+              )}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      </div>
 
+      {/* Optionally show placeholder */}
+      <div style={styles.chatWindow}>
+        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
+          <p style={{textAlign: "center", color: "#718096", padding: "20px"}}>
+            Select a conversation to start messaging
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
         {/* Schedule Tab */}
         {activeTab === "schedule" && (
           <div style={styles.card}>
@@ -1538,15 +1699,7 @@ const handleSaveProfile = async () => {
               <h2 style={styles.cardTitle}>My Schedule</h2>
             </div>
 
-            {/* Weekly Availability */}
-            <div style={styles.infoGroup}>
-              <h3 style={{margin: '0 0 15px 0', color: '#2d3748'}}>Weekly Availability</h3>
-              <ul style={{paddingLeft: "20px", margin: 0}}>
-                <li style={{marginBottom: '8px', color:'#2d3748'}}><strong>Mon:</strong> 5:00 PM – 7:00 PM</li>
-                <li style={{marginBottom: '8px', color:'#2d3748'}}><strong>Wed:</strong> 3:00 PM – 6:00 PM</li>
-                <li style={{marginBottom: '8px', color:'#2d3748'}}><strong>Sat:</strong> 11:00 AM – 2:00 PM</li>
-              </ul>
-            </div>
+            
 
             {/* Upcoming Sessions */}
             <div style={styles.infoGroup}>

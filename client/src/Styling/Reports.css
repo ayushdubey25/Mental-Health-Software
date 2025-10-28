@@ -1,0 +1,262 @@
+.reports-container {
+  padding: 30px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.reports-header {
+  margin-bottom: 30px;
+}
+
+.reports-header h1 {
+  font-size: 32px;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.reports-header p {
+  color: #64748b;
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Summary Grid */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.summary-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.summary-content h3 {
+  margin: 0 0 8px 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.summary-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.summary-subtitle {
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+/* Report Sections */
+.report-section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.report-section h2 {
+  margin: 0 0 24px 0;
+  color: #1e293b;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Status Chart */
+.status-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.status-bar-item {
+  display: grid;
+  grid-template-columns: 150px 1fr 60px;
+  gap: 16px;
+  align-items: center;
+}
+
+.status-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.status-count {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.status-bar {
+  height: 24px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.status-bar-fill {
+  height: 100%;
+  transition: width 0.4s ease;
+  border-radius: 12px;
+}
+
+.status-percentage {
+  text-align: right;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Severity Grid */
+.severity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.severity-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: white;
+  border-left: 4px solid;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.severity-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.severity-card h3 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.severity-count {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+}
+
+.severity-progress {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.severity-progress-fill {
+  height: 100%;
+  transition: width 0.4s ease;
+  border-radius: 4px;
+}
+
+.severity-percentage {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Cases Table */
+.cases-table-wrapper {
+  overflow-x: auto;
+}
+
+.cases-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cases-table thead {
+  background: #f8fafc;
+}
+
+.cases-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  font-size: 14px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.cases-table td {
+  padding: 16px;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+.cases-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.severity-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.status-badge-small {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .status-bar-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .status-label,
+  .status-percentage {
+    text-align: left;
+  }
+  
+  .summary-grid,
+  .severity-grid {
+    grid-template-columns: 1fr;
+  }
+}

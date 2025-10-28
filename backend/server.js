@@ -12,13 +12,16 @@ const volunteerAuth = require("./routes/volunteerAuth");
 const geminiRoute = require("./routes/gemini");
 const userRoute = require("./routes/users");
 const contactRoute = require("./routes/contacts");
+const adminAuthRoutes = require("./routes/adminAuth");
 const groupRoute = require("./routes/groups");
 const chatRoutes = require("./routes/chat");
 const resourceRoutes = require("./routes/resourceRoutes");
 const aiReport = require("./routes/aiReport");
-
+const caseRoutes = require("./routes/cases");
 dotenv.config();
 const app = express();
+const path = require("path");
+
 const server = http.createServer(app);
 
 // ===== Socket.IO =====
@@ -80,6 +83,11 @@ app.use("/api", contactRoute);
 app.use("/api/chat", chatRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use("/api/ai-report", aiReport);
+app.use("/api/admin", adminAuthRoutes);
+app.use("/api/cases", caseRoutes);
+// Make uploaded chat files accessible
+app.use('/uploads/chat', express.static(path.join(__dirname, 'uploads/chat')));
+
 
 const PORT = process.env.PORT || 5600;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

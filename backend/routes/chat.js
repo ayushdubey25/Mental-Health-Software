@@ -1,9 +1,22 @@
 const express = require("express");
 const router = express.Router();
+const path = require("path");
+const multer = require("multer");
 const Chat = require("../models/Chat");
 const Volunteer = require("../models/Volunteer");
 
-// Send message
+// ---------- MULTER STORAGE FOR CHAT FILES ----------
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../uploads/chat/")); // ensure this folder exists and is writable
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "_" + file.originalname);
+  }
+});
+const upload = multer({ storage });
+
+// ---------- SEND TEXT MESSAGE ----------
 router.post("/send", async (req, res) => {
   const { userEmail, volunteerEmail, senderEmail, message } = req.body;
 
@@ -27,19 +40,45 @@ router.post("/send", async (req, res) => {
     });
 
     await chat.save();
-    res.status(200).json(chat);
+    res.status(200).json({ messages: chat.messages });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not send message" });
   }
 });
 
+// ---------- SEND FILE MESSAGE ----------
+router.post("/send-file", upload.single("file"), async (req, res) => {
+  const { userEmail, volunteerEmail, senderEmail } = req.body;
+  if (!req.file || !userEmail || !volunteerEmail || !senderEmail) {
+    return res.status(400).json({ error: "Missing file or fields" });
+  }
+  try {
+    let chat = await Chat.findOne({ userEmail, volunteerEmail });
+    if (!chat) {
+      chat = new Chat({ userEmail, volunteerEmail, messages: [] });
+    }
 
-// ✅ Get all chats for a volunteer by email
+    chat.messages.push({
+      senderEmail,
+      fileUrl: `/uploads/chat/${req.file.filename}`,
+      fileName: req.file.originalname,
+      fileType: req.file.mimetype,
+      timestamp: new Date()
+    });
+
+    await chat.save();
+    res.status(200).json({ messages: chat.messages });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not send file" });
+  }
+});
+
+// ---------- GET ALL CHATS FOR VOLUNTEER ----------
 router.get("/volunteer/:email", async (req, res) => {
   try {
     const { email } = req.params;
-    // Find all chat docs where volunteerEmail matches
     const chats = await Chat.find({ volunteerEmail: email }).sort({ updatedAt: -1 });
     res.json(chats);
   } catch (err) {
@@ -48,8 +87,7 @@ router.get("/volunteer/:email", async (req, res) => {
   }
 });
 
-
-// Fetch chat history
+// ---------- FETCH CHAT HISTORY ----------
 router.get("/:userEmail/:volunteerEmail", async (req, res) => {
   const { userEmail, volunteerEmail } = req.params;
 

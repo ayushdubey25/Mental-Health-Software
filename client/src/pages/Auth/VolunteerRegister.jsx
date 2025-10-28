@@ -5,6 +5,8 @@ import { API_URL } from "../../utils/api";
 
 
 function VolunteerRegister() {
+  const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
   const [formData, setFormData] = useState({
     fullName: "",
     age: "",
@@ -18,6 +20,7 @@ function VolunteerRegister() {
     bio: "",
     experience: [],
     password: "",
+        emergencyAvailability: DAYS_OF_WEEK.map(day => ({ day, start: "", end: "" })),
     consent: false,
     remember: false
   });
@@ -54,41 +57,57 @@ function VolunteerRegister() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const endpoint = isLogin ? "/volunteer/login" : "/volunteer/register";
+  e.preventDefault();
 
-    try {
+  try {
+    if (isLogin) {
+      // LOGIN — use JSON!
+      const res = await fetch(`${API_URL}/volunteer/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+
+      localStorage.setItem("token", data.token);
+      alert("Volunteer logged in ✅");
+      navigate("/volunteer-dash");
+    } else {
+      // REGISTER — use FormData (for file upload)
       const payload = new FormData();
       for (let key in formData) {
         if (key === "skills") {
           payload.append("skills", JSON.stringify(formData.skills));
         } else if (key === "experience") {
           formData.experience.forEach(file => payload.append("experience", file));
-        } else {
+        } else if (key === "emergencyAvailability") {     // <--- ADD THIS BLOCK
+          payload.append("emergencyAvailability", JSON.stringify(formData.emergencyAvailability || []));}
+          else {
           payload.append(key, formData[key]);
         }
       }
 
-      const res = await fetch(`${API_URL}${endpoint}`, {
+      const res = await fetch(`${API_URL}/volunteer/register`, {
         method: "POST",
         body: payload
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Request failed");
+      if (!res.ok) throw new Error(data.error || "Registration failed");
 
-      if (isLogin) {
-        localStorage.setItem("token", data.token);
-        alert("Volunteer logged in ✅");
-        navigate("/volunteer-dash");
-      } else {
-        alert("Thanks for registering as a volunteer 🤝");
-        setIsLogin(true);
-      }
-    } catch (err) {
-      alert(err.message);
+      alert("Thanks for registering as a volunteer 🤝");
+      setIsLogin(true);
     }
-  };
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
 
   return (
     <div className="volunteer-container">
@@ -154,6 +173,42 @@ function VolunteerRegister() {
         <input type="email" name="email" placeholder="Email" required onChange={handleChange} />
         <input type="password" name="password" placeholder="Password" required onChange={handleChange} />
 
+        <label style={{color:"black"}}>Emergency On-Call Times (for instant contact, optional):</label>
+<div>
+  {formData.emergencyAvailability?.map((slot, idx) => (
+    <div key={idx} style={{marginBottom:'6px'}}>
+      <input type="text" placeholder="Day (e.g. Monday)" value={slot.day} onChange={e=>{
+        const updated = [...formData.emergencyAvailability];
+        updated[idx].day = e.target.value;
+        setFormData({...formData, emergencyAvailability: updated});
+      }} style={{width:'110px'}}/>
+      <input type="time" value={slot.start} onChange={e=>{
+        const updated = [...formData.emergencyAvailability];
+        updated[idx].start = e.target.value;
+        setFormData({...formData, emergencyAvailability: updated});
+      }}/>
+      <input type="time" value={slot.end} onChange={e=>{
+        const updated = [...formData.emergencyAvailability];
+        updated[idx].end = e.target.value;
+        setFormData({...formData, emergencyAvailability: updated});
+      }}/>
+      <button type="button" onClick={()=>{
+        setFormData({
+          ...formData,
+          emergencyAvailability: formData.emergencyAvailability.filter((_,i)=>i!==idx)
+        })
+      }} style={{marginLeft:'7px',color:'red'}}>✕</button>
+    </div>
+  ))}
+  <button type="button" onClick={()=>
+    setFormData({
+      ...formData,
+      emergencyAvailability: [ ...(formData.emergencyAvailability||[]), { day:"Monday", start:"09:00", end:"17:00" }]
+    })
+  }>+ Add Slot</button>
+</div>
+
+
         <label className="remember">
           <input type="checkbox" name="remember" onChange={handleChange} /> Remember me
         </label>
@@ -166,7 +221,18 @@ function VolunteerRegister() {
         )}
 
         <button type="submit" className="btn">{isLogin ? "Login" : "Register"}</button>
+        
       </form>
+      <div className="toggle-section">
+        {isLogin ? (
+          <>
+            <p onClick={() => setIsLogin(false)}>👉 New here? Register now</p>
+            <a href="/forgot-password" className="forgot-link">Forgot Password?</a>
+          </>
+        ) : (
+          <p onClick={() => setIsLogin(true)}>👉 Already registered? Login here</p>
+        )}
+      </div>
     </div>
   );
 }

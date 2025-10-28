@@ -1,125 +1,76 @@
-import React, { useRef, useEffect } from "react";
-import * as tf from "@tensorflow/tfjs";
-import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+// If also using face mesh, leave your EmotionDetector import below as needed
 
-const EmotionDetector = ({ onResult }) => {
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const animationFrameId = useRef(null);
+export default function EmergencySupport({ user }) {
+  const [volunteers, setVolunteers] = useState([]);
+  const navigate = useNavigate();
 
+  // Fetch all volunteers (with their emergencyAvailability)
   useEffect(() => {
-    let cancelled = false;
+    axios.get("http://localhost:5600/api/volunteer")
+      .then(res => setVolunteers(res.data))
+      .catch(err => {
+        console.error("Unable to load volunteers:", err);
+        setVolunteers([]);
+      });
+  }, []);
 
-    const start = async () => {
-      try {
-        await tf.ready();
-
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) videoRef.current.srcObject = stream;
-
-        await new Promise(resolve => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = resolve;
-          }
-        });
-
-        const modelName = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
-        const detector = await faceLandmarksDetection.createDetector(modelName, {
-          runtime: "tfjs",
-          refineLandmarks: true,
-        });
-
-        console.log("✅ FaceMesh model loaded successfully");
-        detectFace(detector);
-      } catch (err) {
-        console.error("EmotionDetector init error:", err);
-      }
-    };
-
-    const detectFace = async (detector) => {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      if (!video || !canvas || cancelled) return;
-
-      const ctx = canvas.getContext("2d");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      const detect = async () => {
-        if (cancelled) return;
-        if (!videoRef.current || !canvasRef.current) return;
-
-        const faces = await detector.estimateFaces(videoRef.current);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        let happy = 0, stress = 0, anxiety = 0, audioLevel = 0;
-
-        if (faces.length > 0) {
-          for (const face of faces) {
-            const keypoints = face.keypoints;
-            ctx.beginPath();
-            ctx.strokeStyle = "lime";
-            ctx.lineWidth = 2;
-            keypoints.forEach(point => {
-              ctx.lineTo(point.x, point.y);
-            });
-            ctx.stroke();
-          }
-          happy = Math.random() * 10;
-          stress = Math.random() * 10;
-          anxiety = Math.random() * 10;
-          audioLevel = Math.random() * 100;
-        }
-        if (onResult) {
-          onResult({
-            time: new Date().toLocaleTimeString(),
-            happy,
-            stress,
-            anxiety,
-            audioLevel
-          });
-        }
-
-        animationFrameId.current = requestAnimationFrame(detect);
-      };
-
-      detect();
-    };
-
-    start();
-
-    return () => {
-      cancelled = true;
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [onResult]);
+  // --- Helper: Filter available volunteers for current time ---
+  function isVolunteerAvailableNow(vol) {
+    if (!vol.emergencyAvailability || !Array.isArray(vol.emergencyAvailability)) return false;
+    const now = new Date();
+    const currentDay = now.toLocaleString('en-US', { weekday: 'long' });
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
+    return vol.emergencyAvailability.some(slot =>
+      slot.day === currentDay &&
+      slot.start &&
+      slot.end &&
+      convert(slot.start) <= minutesNow &&
+      convert(slot.end) > minutesNow
+    );
+    function convert(t) {
+      const [h, m] = t.split(':').map(Number);
+      return h*60+(m||0);
+    }
+  }
 
   return (
-    <div style={{ position: "relative" }}>
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        className="rounded-xl"
-        style={{ width: 400, height: 300 }}
-      />
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: 400,
-          height: 300,
-        }}
-      />
+    <div className="emergency-support-card">
+      <h2>🚨 Emergency Volunteer Support</h2>
+      <p>Contact a volunteer who is available right now for immediate support:</p>
+      <div className="emergency-volunteer-list">
+        {volunteers.filter(isVolunteerAvailableNow).length === 0 ? (
+          <p style={{color:'gray'}}>No volunteers available for emergency right now.</p>
+        ) : (
+          volunteers
+            .filter(isVolunteerAvailableNow)
+            .map(v => (
+              <div key={v.email} className="emergency-volunteer-row" style={{marginBottom:"18px"}}>
+                <span style={{fontWeight:"bold"}}>{v.fullName} ({v.mobile})</span>
+                {" | "}
+                <button
+                  style={{marginRight:8}}
+                  onClick={() => window.open(`tel:${v.mobile}`)}
+                  title="Call now"
+                >📞 Call</button>
+                <button
+                  onClick={() => navigate("/chat-volunteer", { state: { volunteerEmail: v.email, userEmail: user.email } })}
+                  title="Chat now"
+                >💬 Chat</button>
+                <div style={{fontSize:"0.92em", color:"#3a7"}}>
+                  {v.emergencyAvailability
+                    .filter(slot => slot.day === new Date().toLocaleString('en-US', { weekday: 'long' }))
+                    .map((slot, idx) => (
+                      <span key={idx}>Available until {slot.end}</span>
+                    ))}
+                </div>
+              </div>
+            ))
+        )}
+      </div>
+      {/* Optionally display detection UI or info here */}
     </div>
   );
-};
-
-export default EmotionDetector;
+}

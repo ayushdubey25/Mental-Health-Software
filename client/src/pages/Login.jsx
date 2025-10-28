@@ -10,7 +10,7 @@ function Login() {
     localStorage.setItem("role", role);
     if (role === "help") navigate("/helpRegister"); 
     if (role === "volunteer") navigate("/volunteer-dashboard");
-    if (role === "admin") navigate("/admin-dashboard");
+    if (role === "admin") navigate("/admin/login");  // ← FIXED: Changed from /admin-dashboard to /admin/login
     if (role === "guest") navigate("/guest-page");
   };
 

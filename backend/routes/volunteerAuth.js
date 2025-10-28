@@ -17,24 +17,37 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+function safeParse(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "object") return val;
+  if (typeof val === "string") {
+    try {
+      return JSON.parse(val);
+    } catch {
+      // Fallback: comma-separated string to array
+      return val.split(",").map(s => s.trim());
+    }
+  }
+  return [];
+}
+
 
 // -------------------- REGISTER --------------------
 // Note: experience PDFs handled with multer
 router.post("/register", upload.array("experience", 5), async (req, res) => {
   try {
-    const { email, password, skills, ...rest } = req.body;
+    const { email, password, skills, emergencyAvailability, sessions, ...rest } = req.body;
 
-    // Parse skills array from JSON if sent as string
-    let skillsArray = [];
-    if (skills) {
-      skillsArray = Array.isArray(skills) ? skills : JSON.parse(skills);
-      skillsArray = [...new Set(skillsArray)]; // remove duplicates
-    }
+    // Robustly parse arrays
+    const skillsArray = [...new Set(safeParse(skills))];
+    const emergencyArr = safeParse(emergencyAvailability);
+    const sessionArr = safeParse(sessions);
 
-    // Get uploaded files
+    // Files
     const experienceFiles = req.files ? req.files.map(f => f.path) : [];
 
-    // Hash password
+    // Hash pw
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const vol = await Volunteer.create({
@@ -42,6 +55,8 @@ router.post("/register", upload.array("experience", 5), async (req, res) => {
       password: hashedPassword,
       skills: skillsArray,
       experience: experienceFiles,
+      emergencyAvailability: emergencyArr,
+      sessions: sessionArr,
       ...rest
     });
 
@@ -51,6 +66,8 @@ router.post("/register", upload.array("experience", 5), async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+
 
 // -------------------- LOGIN --------------------
 router.post("/login", async (req, res) => {
@@ -77,7 +94,7 @@ router.post("/login", async (req, res) => {
 // -------------------- GET ALL VOLUNTEERS --------------------
 router.get("/", async (req, res) => {
   try {
-    const volunteers = await Volunteer.find({}, "fullName email mobile skills bio experience");
+    const volunteers = await Volunteer.find({}, "fullName email mobile skills bio experience emergencyAvailability");
     res.json(volunteers);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -107,17 +124,15 @@ router.get("/me", async (req, res) => {
 // Note: To update PDFs or skills, frontend must send FormData
 router.put("/:id", upload.array("experience", 5), async (req, res) => {
   try {
-    const { skills, ...rest } = req.body;
-
+    const { skills, emergencyAvailability, sessions, ...rest } = req.body;
     let updateData = { ...rest };
 
-    // Update skills array if provided
-    if (skills) {
-      const skillsArray = Array.isArray(skills) ? skills : JSON.parse(skills);
-      updateData.skills = [...new Set(skillsArray)];
-    }
+    // Robustly parse arrays
+    updateData.skills = [...new Set(safeParse(skills))];
+    updateData.emergencyAvailability = safeParse(emergencyAvailability);
+    updateData.sessions = safeParse(sessions);
 
-    // Append new uploaded experience files if any
+    // Handle experience PDFs
     if (req.files && req.files.length > 0) {
       const experienceFiles = req.files.map(f => f.path);
       const vol = await Volunteer.findById(req.params.id);
@@ -131,7 +146,6 @@ router.put("/:id", upload.array("experience", 5), async (req, res) => {
     );
 
     if (!updated) return res.status(404).json({ error: "Volunteer not found" });
-
     res.json(updated);
   } catch (err) {
     console.error(err);
