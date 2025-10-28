@@ -23,10 +23,10 @@ export default function ChatRoom() {
     const load = async () => {
       try {
         const [msgsRes, countRes] = await Promise.all([
-          axios.get(`http://localhost:5600/api/groups/${groupId}/messages`, {
+          axios.get(`https://mental-health-software.onrender.com/api/groups/${groupId}/messages`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`http://localhost:5600/api/groups/${groupId}/membersCount`, {
+          axios.get(`https://mental-health-software.onrender.com/api/groups/${groupId}/membersCount`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
