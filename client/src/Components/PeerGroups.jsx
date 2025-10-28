@@ -16,7 +16,7 @@ export default function PeerGroups() {
   useEffect(() => {
     async function loadGroups() {
       try {
-        const res = await axios.get(`http://localhost:5600/api/groups`, {
+        const res = await axios.get(`https://mental-health-software.onrender.com/api/groups`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGroups(res.data);
@@ -41,7 +41,7 @@ export default function PeerGroups() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5600/api/groups",
+        "https://mental-health-software.onrender.com/api/groups",
         {
           name: newGroup.name,
           category: newGroup.category,
@@ -65,7 +65,7 @@ export default function PeerGroups() {
   const joinGroup = async (groupId) => {
   try {
     await axios.post(
-      `http://localhost:5600/api/groups/${groupId}/join`,
+      `https://mental-health-software.onrender.com/api/groups/${groupId}/join`,
       { userId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
