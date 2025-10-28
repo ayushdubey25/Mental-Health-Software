@@ -16,7 +16,7 @@ function CallAssistance() {
   useEffect(() => {
     async function fetchContacts() {
       try {
-        const res = await axios.get(`http://localhost:5600/api/${userId}/contacts`, {
+        const res = await axios.get(`https://mental-health-software.onrender.com/api/${userId}/contacts`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setContacts(res.data);
@@ -38,7 +38,7 @@ function CallAssistance() {
 
     try {
       const res = await axios.post(
-        `http://localhost:5600/api/${userId}/contacts`,
+        `https://mental-health-software.onrender.com/api/${userId}/contacts`,
         newContact,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -54,7 +54,7 @@ function CallAssistance() {
   const deleteContact = async (contactId) => {
     try {
       const res = await axios.delete(
-        `http://localhost:5600/api/${userId}/contacts/${contactId}`,
+        `https://mental-health-software.onrender.com/api/${userId}/contacts/${contactId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setContacts(res.data);
