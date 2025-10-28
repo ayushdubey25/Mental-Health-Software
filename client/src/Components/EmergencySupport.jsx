@@ -9,7 +9,7 @@ export default function EmergencySupport({ user }) {
 
   // Fetch all volunteers (with their emergencyAvailability)
   useEffect(() => {
-    axios.get("http://localhost:5600/api/volunteer")
+    axios.get("https://mental-health-software.onrender.com/api/volunteer")
       .then(res => setVolunteers(res.data))
       .catch(err => {
         console.error("Unable to load volunteers:", err);
