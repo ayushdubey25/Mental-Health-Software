@@ -40,7 +40,7 @@ export default function UserDashboard() {
     const userId = localStorage.getItem("userId");
     if (!token || !userId) return setLoading(false);
 
-    axios.get(`http://localhost:5600/api/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`https://mental-health-software.onrender.com/api/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setUser(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -62,7 +62,7 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId");
-      await axios.put(`http://localhost:5600/api/users/${userId}`, user, {
+      await axios.put(`https://mental-health-software.onrender.com/api/users/${userId}`, user, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setIsEditing(false);
@@ -230,7 +230,7 @@ export default function UserDashboard() {
         data: sensorData
       };
       console.log("Sending payload:", payload); // Debug log
-      const res = await axios.post("http://localhost:5600/api/ai-report", payload);
+      const res = await axios.post("https://mental-health-software.onrender.com/api/ai-report", payload);
       setAiReport(res.data.report);
     } catch (err) {
       console.error("AI Report Error:", err);
@@ -241,7 +241,7 @@ export default function UserDashboard() {
   };
 
  useEffect(() => {
-    axios.get("http://localhost:5600/api/volunteer")
+    axios.get("https://mental-health-software.onrender.com/api/volunteer")
       .then(res => setVolunteers(res.data))
       .catch(err => {
         console.error("Unable to load volunteers:", err);
