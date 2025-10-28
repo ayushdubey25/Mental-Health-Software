@@ -29,7 +29,7 @@ export default function Chatbot() {
       User says: "${input.trim()}"`;
 
       const res = await axios.post(
-        "http://localhost:5600/api/gemini/chat",
+        "https://mental-health-software.onrender.com/api/gemini/chat",
         { prompt }
       );
 
