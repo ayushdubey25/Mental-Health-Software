@@ -14,7 +14,7 @@ function Counseling() {
   useEffect(() => {
     const fetchVolunteers = async () => {
       try {
-        const res = await axios.get("http://localhost:5600/api/volunteer");
+        const res = await axios.get("https://mental-health-software.onrender.com/api/volunteer");
         setVolunteers(res.data);
       } catch (err) {
         console.error("Error fetching volunteers:", err.response?.data || err.message);
